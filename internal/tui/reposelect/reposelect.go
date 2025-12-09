@@ -14,12 +14,12 @@ import (
 
 type item struct {
 	repo     models.Repository
-	selected bool
+	selected map[string]models.Repository
 }
 
 func (i item) Title() string {
 	checkbox := "[ ]"
-	if i.selected {
+	if _, ok := i.selected[i.repo.NameWithOwner]; ok {
 		checkbox = "[x]"
 	}
 	return fmt.Sprintf("%s %s", checkbox, i.repo.NameWithOwner)
@@ -39,7 +39,6 @@ func (i item) FilterValue() string {
 
 type Model struct {
 	list     list.Model
-	items    []item
 	selected map[string]models.Repository
 	width    int
 	height   int
@@ -50,11 +49,11 @@ type DoneMsg struct {
 }
 
 func New(repos []models.Repository, width, height int) Model {
-	items := make([]item, len(repos))
+	selected := make(map[string]models.Repository)
+
 	listItems := make([]list.Item, len(repos))
 	for i, r := range repos {
-		items[i] = item{repo: r}
-		listItems[i] = items[i]
+		listItems[i] = item{repo: r, selected: selected}
 	}
 
 	delegate := list.NewDefaultDelegate()
@@ -78,8 +77,7 @@ func New(repos []models.Repository, width, height int) Model {
 
 	return Model{
 		list:     l,
-		items:    items,
-		selected: make(map[string]models.Repository),
+		selected: selected,
 		width:    width,
 		height:   height,
 	}
@@ -98,19 +96,18 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		if m.list.FilterState() == list.Filtering {
-			break
-		}
-
-		switch {
-		case key.Matches(msg, tui.Keys.Select):
-			return m.toggleSelection(), nil
-		case key.Matches(msg, tui.Keys.Confirm):
-			if len(m.selected) > 0 {
-				return m, m.confirmSelection
+		if m.list.FilterState() != list.Filtering {
+			switch {
+			case key.Matches(msg, tui.Keys.Select):
+				m = m.toggleSelection()
+				return m, nil
+			case key.Matches(msg, tui.Keys.Confirm):
+				if len(m.selected) > 0 {
+					return m, m.confirmSelection
+				}
+			case key.Matches(msg, tui.Keys.Quit):
+				return m, tea.Quit
 			}
-		case key.Matches(msg, tui.Keys.Quit):
-			return m, tea.Quit
 		}
 	}
 
@@ -138,40 +135,21 @@ func (m Model) Selected() []models.Repository {
 }
 
 func (m Model) toggleSelection() Model {
-	if len(m.list.Items()) == 0 {
+	selectedItem := m.list.SelectedItem()
+	if selectedItem == nil {
 		return m
 	}
 
-	idx := m.list.Index()
-	visibleItems := m.list.Items()
-	if idx >= len(visibleItems) {
-		return m
-	}
-
-	selectedItem := visibleItems[idx].(item)
-	repoKey := selectedItem.repo.NameWithOwner
+	it := selectedItem.(item)
+	repoKey := it.repo.NameWithOwner
 
 	if _, exists := m.selected[repoKey]; exists {
 		delete(m.selected, repoKey)
 	} else {
-		m.selected[repoKey] = selectedItem.repo
+		m.selected[repoKey] = it.repo
 	}
 
-	m.updateListItems()
 	return m
-}
-
-func (m *Model) updateListItems() {
-	for i, it := range m.items {
-		_, selected := m.selected[it.repo.NameWithOwner]
-		m.items[i].selected = selected
-	}
-
-	listItems := make([]list.Item, len(m.items))
-	for i, it := range m.items {
-		listItems[i] = it
-	}
-	m.list.SetItems(listItems)
 }
 
 func (m Model) confirmSelection() tea.Msg {

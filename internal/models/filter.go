@@ -6,10 +6,11 @@ const (
 )
 
 type FilterOptions struct {
-	DateFrom string
-	DateTo   string
-	Author   string
-	PerPage  int
+	DateFrom      string
+	DateTo        string
+	Author        string
+	PerPage       int
+	SemanticQuery string
 }
 
 type BranchSelection struct {
@@ -31,7 +32,11 @@ func (f *FilterOptions) Validate() {
 }
 
 func (f FilterOptions) HasAnyFilter() bool {
-	return f.hasDateFilter() || f.hasAuthorFilter()
+	return f.hasDateFilter() || f.hasAuthorFilter() || f.HasSemanticFilter()
+}
+
+func (f FilterOptions) HasSemanticFilter() bool {
+	return f.SemanticQuery != ""
 }
 
 func (f FilterOptions) hasDateFilter() bool {

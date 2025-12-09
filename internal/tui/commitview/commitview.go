@@ -86,10 +86,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, nil
 		case key.Matches(msg, tui.Keys.Down):
 			m.moveCursor(1)
+			cmd := m.checkLoadMore()
 			m.updateContent()
-			return m, m.checkLoadMore()
+			return m, cmd
 		case key.Matches(msg, tui.Keys.NextPage):
-			return m, m.loadMoreForCurrentRepo()
+			cmd := m.loadMoreForCurrentRepo()
+			m.updateContent()
+			return m, cmd
 		}
 	}
 
@@ -112,24 +115,34 @@ func (m Model) View() string {
 func (m *Model) updateContent() {
 	var content strings.Builder
 	commitIndex := 0
+	cursorLine := 0
+	lineCount := 0
 
 	for _, rc := range m.repoCommits {
 		header := fmt.Sprintf("═══ %s (%s) - %d commits ═══",
 			rc.Repository.NameWithOwner, rc.Branch, len(rc.Commits))
 		content.WriteString(tui.RepoHeaderStyle.Render(header))
 		content.WriteString("\n\n")
+		lineCount += 2
 
 		for _, c := range rc.Commits {
-			content.WriteString(m.renderCommit(c, commitIndex))
+			if commitIndex == m.cursor {
+				cursorLine = lineCount
+			}
+			commitStr := m.renderCommit(c, commitIndex)
+			content.WriteString(commitStr)
 			content.WriteString("\n")
+			lineCount += strings.Count(commitStr, "\n") + 1
 			commitIndex++
 		}
 
 		if rc.HasMore {
 			content.WriteString(tui.DimStyle.Render("    ↓ press 'n' to load more..."))
 			content.WriteString("\n")
+			lineCount += 1
 		}
 		content.WriteString("\n")
+		lineCount += 1
 	}
 
 	if m.loading {
@@ -138,6 +151,7 @@ func (m *Model) updateContent() {
 	}
 
 	m.viewport.SetContent(content.String())
+	m.ensureCursorVisible(cursorLine)
 }
 
 func (m Model) renderCommit(c models.Commit, index int) string {
@@ -189,8 +203,23 @@ func (m *Model) moveCursor(delta int) {
 	if m.cursor < 0 {
 		m.cursor = 0
 	}
-	if m.cursor >= m.totalCommits {
-		m.cursor = m.totalCommits - 1
+	maxCursor := m.totalCommits - 1
+	if maxCursor < 0 {
+		maxCursor = 0
+	}
+	if m.cursor > maxCursor {
+		m.cursor = maxCursor
+	}
+}
+
+func (m *Model) ensureCursorVisible(cursorLine int) {
+	viewTop := m.viewport.YOffset
+	viewBottom := viewTop + m.viewport.Height
+
+	if cursorLine < viewTop {
+		m.viewport.SetYOffset(cursorLine)
+	} else if cursorLine >= viewBottom-2 {
+		m.viewport.SetYOffset(cursorLine - m.viewport.Height + 3)
 	}
 }
 

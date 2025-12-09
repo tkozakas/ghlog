@@ -94,6 +94,8 @@ func TestNextField(t *testing.T) {
 		t.Errorf("focused = %d, want 1", m.focused)
 	}
 
+	// fieldCountBase is 5 (dateFrom, dateTo, author, perPage, semanticQuery)
+	m = m.nextField()
 	m = m.nextField()
 	m = m.nextField()
 	m = m.nextField()

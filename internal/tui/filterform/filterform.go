@@ -18,6 +18,7 @@ const (
 	fieldDateTo
 	fieldAuthor
 	fieldPerPage
+	fieldSemanticQuery
 	fieldCountBase
 )
 
@@ -43,11 +44,12 @@ func New(repoBranches []RepoBranches) Model {
 	fieldCount := fieldCountBase + len(repoBranches)
 	inputs := make([]textinput.Model, fieldCountBase)
 
-	inputs[fieldDateFrom] = newInput("2024-01-01", 10)
-	inputs[fieldDateTo] = newInput("2024-12-31", 10)
+	inputs[fieldDateFrom] = newInput("2020-01-01", 10)
+	inputs[fieldDateTo] = newInput("2025-12-31", 10)
 	inputs[fieldAuthor] = newInput("username", 30)
 	inputs[fieldPerPage] = newInput("50", 3)
 	inputs[fieldPerPage].SetValue("50")
+	inputs[fieldSemanticQuery] = newInput("bug fix, refactoring...", 40)
 
 	inputs[fieldDateFrom].Focus()
 
@@ -102,6 +104,7 @@ func (m Model) View() string {
 		m.renderField(fieldDateTo, "To: ")))
 	b.WriteString(fmt.Sprintf("  %s\n\n", m.renderField(fieldAuthor, "Author:  ")))
 	b.WriteString(fmt.Sprintf("  %s\n\n", m.renderField(fieldPerPage, "Per page:")))
+	b.WriteString(fmt.Sprintf("  %s\n\n", m.renderField(fieldSemanticQuery, "Semantic:")))
 
 	if len(m.repoBranches) > 0 {
 		b.WriteString("  " + tui.DimStyle.Render("─── Branches ───") + "\n\n")
@@ -119,10 +122,11 @@ func (m Model) View() string {
 func (m Model) Filters() models.FilterOptions {
 	perPage, _ := strconv.Atoi(m.inputs[fieldPerPage].Value())
 	filters := models.FilterOptions{
-		DateFrom: m.inputs[fieldDateFrom].Value(),
-		DateTo:   m.inputs[fieldDateTo].Value(),
-		Author:   m.inputs[fieldAuthor].Value(),
-		PerPage:  perPage,
+		DateFrom:      m.inputs[fieldDateFrom].Value(),
+		DateTo:        m.inputs[fieldDateTo].Value(),
+		Author:        m.inputs[fieldAuthor].Value(),
+		PerPage:       perPage,
+		SemanticQuery: m.inputs[fieldSemanticQuery].Value(),
 	}
 	filters.Validate()
 	return filters

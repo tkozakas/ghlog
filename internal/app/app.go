@@ -8,6 +8,7 @@ import (
 
 	"gh-commit-analyzer/internal/github"
 	"gh-commit-analyzer/internal/models"
+	"gh-commit-analyzer/internal/search"
 	"gh-commit-analyzer/internal/tui"
 	"gh-commit-analyzer/internal/tui/commitview"
 	"gh-commit-analyzer/internal/tui/filterform"
@@ -50,6 +51,7 @@ type moreCommitsLoadedMsg struct {
 	repoName string
 	commits  []models.Commit
 	page     int
+	hasMore  bool
 }
 type errMsg struct{ err error }
 
@@ -207,7 +209,6 @@ func (m Model) loadAllCommits() (Model, tea.Cmd) {
 func (m Model) loadCommitsCmd() tea.Cmd {
 	return func() tea.Msg {
 		var repoCommits []models.RepoCommits
-
 		for _, repo := range m.selectedRepos {
 			branch := m.branches[repo.NameWithOwner]
 			if branch == "" {
@@ -215,6 +216,11 @@ func (m Model) loadCommitsCmd() tea.Cmd {
 			}
 
 			commits, hasMore, err := github.GetCommits(repo.Owner(), repo.RepoName(), branch, m.filters, 1)
+			if err != nil {
+				return errMsg{err: err}
+			}
+
+			commits, err = applySemanticFilter(commits, m.filters.SemanticQuery)
 			if err != nil {
 				return errMsg{err: err}
 			}
@@ -244,7 +250,7 @@ func (m Model) loadMoreCommits(repoName string, page int) tea.Cmd {
 				branch = repo.DefaultBranchName
 			}
 
-			commits, _, err := github.GetCommits(repo.Owner(), repo.RepoName(), branch, m.filters, page)
+			commits, hasMore, err := github.GetCommits(repo.Owner(), repo.RepoName(), branch, m.filters, page)
 			if err != nil {
 				return errMsg{err: err}
 			}
@@ -253,6 +259,7 @@ func (m Model) loadMoreCommits(repoName string, page int) tea.Cmd {
 				repoName: repoName,
 				commits:  commits,
 				page:     page,
+				hasMore:  hasMore,
 			}
 		}
 		return nil
@@ -281,7 +288,7 @@ func updateRepoCommits(repoCommits []models.RepoCommits, msg moreCommitsLoadedMs
 		if rc.Repository.NameWithOwner == msg.repoName {
 			repoCommits[i].Commits = append(rc.Commits, msg.commits...)
 			repoCommits[i].Page = msg.page
-			repoCommits[i].HasMore = len(msg.commits) > 0
+			repoCommits[i].HasMore = msg.hasMore
 			break
 		}
 	}
@@ -294,4 +301,14 @@ func loadRepos() tea.Msg {
 		return errMsg{err: err}
 	}
 	return reposLoadedMsg{repos: repos}
+}
+
+func applySemanticFilter(commits []models.Commit, query string) ([]models.Commit, error) {
+	if query == "" {
+		return commits, nil
+	}
+	if !search.IsAvailable() {
+		return commits, nil
+	}
+	return search.FilterCommitsSemantically(commits, query)
 }

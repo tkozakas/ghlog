@@ -42,13 +42,34 @@ func TestFilterOptionsHasAnyFilter(t *testing.T) {
 		{"dateFrom", FilterOptions{DateFrom: "2024-01-01"}, true},
 		{"dateTo", FilterOptions{DateTo: "2024-12-31"}, true},
 		{"author", FilterOptions{Author: "john"}, true},
-		{"allFilters", FilterOptions{DateFrom: "2024-01-01", DateTo: "2024-12-31", Author: "john"}, true},
+		{"semanticQuery", FilterOptions{SemanticQuery: "bug fix"}, true},
+		{"allFilters", FilterOptions{DateFrom: "2024-01-01", DateTo: "2024-12-31", Author: "john", SemanticQuery: "refactor"}, true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.filter.HasAnyFilter(); got != tt.expected {
 				t.Errorf("HasAnyFilter() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFilterOptionsHasSemanticFilter(t *testing.T) {
+	tests := []struct {
+		name     string
+		query    string
+		expected bool
+	}{
+		{"empty", "", false},
+		{"withQuery", "bug fix", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := FilterOptions{SemanticQuery: tt.query}
+			if got := f.HasSemanticFilter(); got != tt.expected {
+				t.Errorf("HasSemanticFilter() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
