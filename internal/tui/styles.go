@@ -27,6 +27,9 @@ var (
 			Foreground(ColorError).
 			Bold(true)
 
+	SuccessStyle = lipgloss.NewStyle().
+			Foreground(ColorSuccess)
+
 	HelpStyle = lipgloss.NewStyle().
 			Foreground(ColorSecondary).
 			MarginTop(1)

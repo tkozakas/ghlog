@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"gh-commit-analyzer/internal/models"
+	"gh-commit-analyzer/internal/search"
 	"gh-commit-analyzer/internal/tui"
 )
 
@@ -104,7 +105,7 @@ func (m Model) View() string {
 		m.renderField(fieldDateTo, "To: ")))
 	b.WriteString(fmt.Sprintf("  %s\n\n", m.renderField(fieldAuthor, "Author:  ")))
 	b.WriteString(fmt.Sprintf("  %s\n\n", m.renderField(fieldPerPage, "Per page:")))
-	b.WriteString(fmt.Sprintf("  %s\n\n", m.renderField(fieldSemanticQuery, "Semantic:")))
+	b.WriteString(fmt.Sprintf("  %s  %s\n\n", m.renderField(fieldSemanticQuery, "Semantic:"), m.renderSemanticStatus()))
 
 	if len(m.repoBranches) > 0 {
 		b.WriteString("  " + tui.DimStyle.Render("─── Branches ───") + "\n\n")
@@ -218,6 +219,13 @@ func (m Model) renderField(field int, label string) string {
 		style = tui.SelectedStyle
 	}
 	return style.Render(label) + m.inputs[field].View()
+}
+
+func (m Model) renderSemanticStatus() string {
+	if search.IsAvailable() {
+		return tui.SuccessStyle.Render("(ck ready)")
+	}
+	return tui.ErrorStyle.Render("(ck not found)")
 }
 
 func (m Model) renderBranchField(repoIdx int, rb RepoBranches) string {

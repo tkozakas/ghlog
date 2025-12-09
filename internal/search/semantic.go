@@ -70,7 +70,7 @@ func runCkSearch(dir, query string) (map[string]float64, error) {
 		return nil, err
 	}
 
-	cmd := exec.Command("ck", "--jsonl", "--sem", "--scores", query, dir)
+	cmd := exec.Command("ck", "--jsonl", "--hybrid", "--scores", query, dir)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
