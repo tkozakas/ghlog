@@ -29,10 +29,7 @@ func (i item) FilterValue() string { return i.name }
 type Model struct {
 	list           list.Model
 	repo           models.Repository
-	branches       []string
 	selectedBranch string
-	done           bool
-	useDefault     bool
 }
 
 type DoneMsg struct {
@@ -64,9 +61,8 @@ func New(repo models.Repository, branches []string, width, height int) Model {
 	l.AdditionalShortHelpKeys = shortHelpKeys
 
 	return Model{
-		list:     l,
-		repo:     repo,
-		branches: branches,
+		list: l,
+		repo: repo,
 	}
 }
 
@@ -90,16 +86,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if len(m.list.Items()) > 0 {
 				selected := m.list.SelectedItem().(item)
 				m.selectedBranch = selected.name
-				m.done = true
 				return m, m.submit
 			}
 		case key.Matches(msg, tui.Keys.Default):
-			m.useDefault = true
-			m.done = true
 			return m, m.submitDefault
 		case key.Matches(msg, tui.Keys.Back):
 			m.selectedBranch = m.repo.DefaultBranchName
-			m.done = true
 			return m, m.submit
 		case key.Matches(msg, tui.Keys.Quit):
 			return m, tea.Quit
@@ -116,23 +108,12 @@ func (m Model) View() string {
 	return m.list.View() + "\n" + help
 }
 
-func (m Model) Done() bool {
-	return m.done
-}
-
-func (m Model) SelectedBranch() string {
-	if m.selectedBranch == "" {
-		return m.repo.DefaultBranchName
-	}
-	return m.selectedBranch
-}
-
-func (m Model) UseDefaultForAll() bool {
-	return m.useDefault
-}
-
 func (m Model) submit() tea.Msg {
-	return DoneMsg{Repo: m.repo, Branch: m.SelectedBranch()}
+	branch := m.selectedBranch
+	if branch == "" {
+		branch = m.repo.DefaultBranchName
+	}
+	return DoneMsg{Repo: m.repo, Branch: branch}
 }
 
 func (m Model) submitDefault() tea.Msg {

@@ -43,7 +43,6 @@ type Model struct {
 	selected map[string]models.Repository
 	width    int
 	height   int
-	done     bool
 }
 
 type DoneMsg struct {
@@ -108,7 +107,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m.toggleSelection(), nil
 		case key.Matches(msg, tui.Keys.Confirm):
 			if len(m.selected) > 0 {
-				m.done = true
 				return m, m.confirmSelection
 			}
 		case key.Matches(msg, tui.Keys.Quit):
@@ -129,10 +127,6 @@ func (m Model) View() string {
 		status = tui.DimStyle.Render(status)
 	}
 	return m.list.View() + status
-}
-
-func (m Model) Done() bool {
-	return m.done
 }
 
 func (m Model) Selected() []models.Repository {

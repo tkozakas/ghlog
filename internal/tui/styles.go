@@ -16,9 +16,6 @@ var (
 			Foreground(ColorPrimary).
 			MarginBottom(1)
 
-	SubtitleStyle = lipgloss.NewStyle().
-			Foreground(ColorSecondary)
-
 	SelectedStyle = lipgloss.NewStyle().
 			Foreground(ColorSuccess).
 			Bold(true)
@@ -47,9 +44,6 @@ var (
 
 	CommitAuthorStyle = lipgloss.NewStyle().
 				Foreground(ColorPrimary)
-
-	CommitMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("255"))
 
 	RepoHeaderStyle = lipgloss.NewStyle().
 			Bold(true).
