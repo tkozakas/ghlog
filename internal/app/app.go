@@ -9,7 +9,6 @@ import (
 	"gh-commit-analyzer/internal/github"
 	"gh-commit-analyzer/internal/models"
 	"gh-commit-analyzer/internal/tui"
-	"gh-commit-analyzer/internal/tui/branchselect"
 	"gh-commit-analyzer/internal/tui/commitview"
 	"gh-commit-analyzer/internal/tui/filterform"
 	"gh-commit-analyzer/internal/tui/reposelect"
@@ -20,8 +19,8 @@ type state int
 const (
 	stateLoading state = iota
 	stateRepoSelect
+	stateLoadingBranches
 	stateFilterForm
-	stateBranchSelect
 	stateLoadingCommits
 	stateCommitView
 	stateError
@@ -35,19 +34,23 @@ type Model struct {
 	err           error
 	repos         []models.Repository
 	selectedRepos []models.Repository
+	repoBranches  []filterform.RepoBranches
 	filters       models.FilterOptions
 	branches      map[string]string
-	branchIndex   int
 	repoCommits   []models.RepoCommits
 	repoSelect    reposelect.Model
 	filterForm    filterform.Model
-	branchSelect  branchselect.Model
 	commitView    commitview.Model
 }
 
 type reposLoadedMsg struct{ repos []models.Repository }
-type branchesLoadedMsg struct{ branches []string }
+type allBranchesLoadedMsg struct{ repoBranches []filterform.RepoBranches }
 type commitsLoadedMsg struct{ repoCommits []models.RepoCommits }
+type moreCommitsLoadedMsg struct {
+	repoName string
+	commits  []models.Commit
+	page     int
+}
 type errMsg struct{ err error }
 
 func New() Model {
@@ -91,32 +94,33 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case reposelect.DoneMsg:
 		m.selectedRepos = msg.Selected
-		m.filterForm = filterform.New()
+		m.state = stateLoadingBranches
+		return m, m.loadAllBranches()
+
+	case allBranchesLoadedMsg:
+		m.repoBranches = msg.repoBranches
+		m.filterForm = filterform.New(m.repoBranches)
 		m.state = stateFilterForm
 		return m, nil
 
 	case filterform.DoneMsg:
 		m.filters = msg.Filters
-		return m.startBranchSelection()
-
-	case branchesLoadedMsg:
-		repo := m.selectedRepos[m.branchIndex]
-		m.branchSelect = branchselect.New(repo, msg.branches, m.width, m.height)
-		m.state = stateBranchSelect
-		return m, nil
-
-	case branchselect.DoneMsg:
-		m.branches[msg.Repo.NameWithOwner] = msg.Branch
-		return m.nextBranchOrLoadCommits()
-
-	case branchselect.UseDefaultMsg:
-		return m.useDefaultBranches()
+		m.branches = msg.Branches
+		return m.loadAllCommits()
 
 	case commitsLoadedMsg:
 		m.repoCommits = msg.repoCommits
 		m.commitView = commitview.New(m.repoCommits, m.width, m.height)
 		m.state = stateCommitView
 		return m, nil
+
+	case moreCommitsLoadedMsg:
+		m.repoCommits = updateRepoCommits(m.repoCommits, msg)
+		m.commitView.UpdateCommits(m.repoCommits)
+		return m, nil
+
+	case commitview.LoadMoreMsg:
+		return m, m.loadMoreCommits(msg.RepoName, msg.NextPage)
 
 	case commitview.RestartMsg:
 		return m.restart()
@@ -136,10 +140,10 @@ func (m Model) View() string {
 		return m.viewLoading("Loading repositories...")
 	case stateRepoSelect:
 		return m.repoSelect.View()
+	case stateLoadingBranches:
+		return m.viewLoading("Loading branches...")
 	case stateFilterForm:
 		return m.filterForm.View()
-	case stateBranchSelect:
-		return m.branchSelect.View()
 	case stateLoadingCommits:
 		return m.viewLoading("Loading commits...")
 	case stateCommitView:
@@ -159,8 +163,6 @@ func (m Model) updateChild(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.repoSelect, cmd = m.repoSelect.Update(msg)
 	case stateFilterForm:
 		m.filterForm, cmd = m.filterForm.Update(msg)
-	case stateBranchSelect:
-		m.branchSelect, cmd = m.branchSelect.Update(msg)
 	case stateCommitView:
 		m.commitView, cmd = m.commitView.Update(msg)
 	}
@@ -172,40 +174,29 @@ func (m Model) propagateSize() Model {
 	switch m.state {
 	case stateRepoSelect:
 		m.repoSelect, _ = m.repoSelect.Update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
-	case stateBranchSelect:
-		m.branchSelect, _ = m.branchSelect.Update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
 	case stateCommitView:
 		m.commitView, _ = m.commitView.Update(tea.WindowSizeMsg{Width: m.width, Height: m.height})
 	}
 	return m
 }
 
-func (m Model) startBranchSelection() (Model, tea.Cmd) {
-	m.branchIndex = 0
-	return m.loadBranchesForCurrent()
-}
+func (m Model) loadAllBranches() tea.Cmd {
+	return func() tea.Msg {
+		var repoBranches []filterform.RepoBranches
 
-func (m Model) loadBranchesForCurrent() (Model, tea.Cmd) {
-	if m.branchIndex >= len(m.selectedRepos) {
-		return m.loadAllCommits()
+		for _, repo := range m.selectedRepos {
+			branches, err := github.ListBranches(repo.Owner(), repo.RepoName())
+			if err != nil {
+				return errMsg{err: err}
+			}
+			repoBranches = append(repoBranches, filterform.RepoBranches{
+				Repo:     repo,
+				Branches: branches,
+			})
+		}
+
+		return allBranchesLoadedMsg{repoBranches: repoBranches}
 	}
-
-	m.state = stateLoading
-	repo := m.selectedRepos[m.branchIndex]
-	return m, loadBranches(repo)
-}
-
-func (m Model) nextBranchOrLoadCommits() (Model, tea.Cmd) {
-	m.branchIndex++
-	return m.loadBranchesForCurrent()
-}
-
-func (m Model) useDefaultBranches() (Model, tea.Cmd) {
-	for i := m.branchIndex; i < len(m.selectedRepos); i++ {
-		repo := m.selectedRepos[i]
-		m.branches[repo.NameWithOwner] = repo.DefaultBranchName
-	}
-	return m.loadAllCommits()
 }
 
 func (m Model) loadAllCommits() (Model, tea.Cmd) {
@@ -223,7 +214,7 @@ func (m Model) loadCommitsCmd() tea.Cmd {
 				branch = repo.DefaultBranchName
 			}
 
-			commits, _, err := github.GetCommits(repo.Owner(), repo.RepoName(), branch, m.filters, 1)
+			commits, hasMore, err := github.GetCommits(repo.Owner(), repo.RepoName(), branch, m.filters, 1)
 			if err != nil {
 				return errMsg{err: err}
 			}
@@ -233,10 +224,38 @@ func (m Model) loadCommitsCmd() tea.Cmd {
 				Branch:     branch,
 				Commits:    commits,
 				Page:       1,
+				HasMore:    hasMore,
 			})
 		}
 
 		return commitsLoadedMsg{repoCommits: repoCommits}
+	}
+}
+
+func (m Model) loadMoreCommits(repoName string, page int) tea.Cmd {
+	return func() tea.Msg {
+		for _, repo := range m.selectedRepos {
+			if repo.NameWithOwner != repoName {
+				continue
+			}
+
+			branch := m.branches[repo.NameWithOwner]
+			if branch == "" {
+				branch = repo.DefaultBranchName
+			}
+
+			commits, _, err := github.GetCommits(repo.Owner(), repo.RepoName(), branch, m.filters, page)
+			if err != nil {
+				return errMsg{err: err}
+			}
+
+			return moreCommitsLoadedMsg{
+				repoName: repoName,
+				commits:  commits,
+				page:     page,
+			}
+		}
+		return nil
 	}
 }
 
@@ -257,20 +276,22 @@ func (m Model) viewError() string {
 	return tui.ErrorStyle.Render(fmt.Sprintf("\n  Error: %v\n\n  Press q to quit.\n", m.err))
 }
 
+func updateRepoCommits(repoCommits []models.RepoCommits, msg moreCommitsLoadedMsg) []models.RepoCommits {
+	for i, rc := range repoCommits {
+		if rc.Repository.NameWithOwner == msg.repoName {
+			repoCommits[i].Commits = append(rc.Commits, msg.commits...)
+			repoCommits[i].Page = msg.page
+			repoCommits[i].HasMore = len(msg.commits) > 0
+			break
+		}
+	}
+	return repoCommits
+}
+
 func loadRepos() tea.Msg {
 	repos, err := github.ListRepositories()
 	if err != nil {
 		return errMsg{err: err}
 	}
 	return reposLoadedMsg{repos: repos}
-}
-
-func loadBranches(repo models.Repository) tea.Cmd {
-	return func() tea.Msg {
-		branches, err := github.ListBranches(repo.Owner(), repo.RepoName())
-		if err != nil {
-			return errMsg{err: err}
-		}
-		return branchesLoadedMsg{branches: branches}
-	}
 }

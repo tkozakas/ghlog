@@ -21,9 +21,15 @@ type Model struct {
 	width        int
 	height       int
 	ready        bool
+	loading      bool
 }
 
 type RestartMsg struct{}
+
+type LoadMoreMsg struct {
+	RepoName string
+	NextPage int
+}
 
 func New(repoCommits []models.RepoCommits, width, height int) Model {
 	vp := viewport.New(width, height-4)
@@ -41,6 +47,13 @@ func New(repoCommits []models.RepoCommits, width, height int) Model {
 	m.ready = true
 
 	return m
+}
+
+func (m *Model) UpdateCommits(repoCommits []models.RepoCommits) {
+	m.repoCommits = repoCommits
+	m.totalCommits = m.countCommits()
+	m.loading = false
+	m.updateContent()
 }
 
 func (m Model) Init() tea.Cmd {
@@ -74,7 +87,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case key.Matches(msg, tui.Keys.Down):
 			m.moveCursor(1)
 			m.updateContent()
-			return m, nil
+			return m, m.checkLoadMore()
+		case key.Matches(msg, tui.Keys.NextPage):
+			return m, m.loadMoreForCurrentRepo()
 		}
 	}
 
@@ -89,7 +104,7 @@ func (m Model) View() string {
 	}
 
 	title := tui.TitleStyle.Render("Commits")
-	help := tui.HelpStyle.Render("↑/↓: navigate • enter: expand • r: restart • q: quit")
+	help := tui.HelpStyle.Render("↑/↓: navigate • enter: expand • n: load more • r: restart • q: quit")
 
 	return fmt.Sprintf("%s\n%s\n%s", title, m.viewport.View(), help)
 }
@@ -109,6 +124,16 @@ func (m *Model) updateContent() {
 			content.WriteString("\n")
 			commitIndex++
 		}
+
+		if rc.HasMore {
+			content.WriteString(tui.DimStyle.Render("    ↓ press 'n' to load more..."))
+			content.WriteString("\n")
+		}
+		content.WriteString("\n")
+	}
+
+	if m.loading {
+		content.WriteString(tui.SelectedStyle.Render("  Loading more commits..."))
 		content.WriteString("\n")
 	}
 
@@ -175,4 +200,46 @@ func (m Model) countCommits() int {
 		count += len(rc.Commits)
 	}
 	return count
+}
+
+func (m *Model) checkLoadMore() tea.Cmd {
+	if m.loading {
+		return nil
+	}
+
+	commitsSoFar := 0
+	for _, rc := range m.repoCommits {
+		commitsSoFar += len(rc.Commits)
+		if m.cursor >= commitsSoFar-3 && rc.HasMore {
+			m.loading = true
+			return func() tea.Msg {
+				return LoadMoreMsg{
+					RepoName: rc.Repository.NameWithOwner,
+					NextPage: rc.Page + 1,
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (m *Model) loadMoreForCurrentRepo() tea.Cmd {
+	if m.loading {
+		return nil
+	}
+
+	commitsSoFar := 0
+	for _, rc := range m.repoCommits {
+		commitsSoFar += len(rc.Commits)
+		if m.cursor < commitsSoFar && rc.HasMore {
+			m.loading = true
+			return func() tea.Msg {
+				return LoadMoreMsg{
+					RepoName: rc.Repository.NameWithOwner,
+					NextPage: rc.Page + 1,
+				}
+			}
+		}
+	}
+	return nil
 }
