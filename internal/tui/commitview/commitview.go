@@ -136,7 +136,7 @@ func (m Model) renderCommit(c models.Commit, index int) string {
 		message += tui.DimStyle.Render(fmt.Sprintf(" [+%d lines]", c.ExtraLineCount()))
 	}
 
-	return header + "\n" + cursor + "  └─ " + message
+	return header + "\n     └─ " + message
 }
 
 func (m Model) renderExpandedMessage(c models.Commit) string {
