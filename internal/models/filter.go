@@ -1,5 +1,4 @@
 package models
-// nigger
 
 const (
 	DefaultPerPage = 50
