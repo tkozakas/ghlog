@@ -6,14 +6,14 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"gh-commit-analyzer/internal/app"
-	"gh-commit-analyzer/internal/github"
+	"ghlog/internal/app"
+	"ghlog/internal/github"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "gh-commit-analyzer",
-	Short: "Analyze commits from your GitHub repositories",
-	Long:  "An interactive CLI tool to browse and analyze commits from multiple GitHub repositories.",
+	Use:   "ghlog",
+	Short: "Browse commits from your GitHub repositories",
+	Long:  "An interactive CLI tool to browse commits from multiple GitHub repositories with semantic search.",
 	RunE:  run,
 }
 

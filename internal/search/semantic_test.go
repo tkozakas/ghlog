@@ -3,7 +3,7 @@ package search
 import (
 	"testing"
 
-	"gh-commit-analyzer/internal/models"
+	"ghlog/internal/models"
 )
 
 func TestExtractSHAFromPath(t *testing.T) {

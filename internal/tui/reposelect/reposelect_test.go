@@ -3,7 +3,7 @@ package reposelect
 import (
 	"testing"
 
-	"gh-commit-analyzer/internal/models"
+	"ghlog/internal/models"
 )
 
 func TestItemTitle(t *testing.T) {
@@ -98,10 +98,8 @@ func TestSharedMapBetweenItems(t *testing.T) {
 
 	m := New(repos, 80, 24)
 
-	// Select a repo
 	m.selected["foo/baz"] = repos[1]
 
-	// All items should see the updated map
 	items := m.list.Items()
 	for _, listItem := range items {
 		it := listItem.(item)

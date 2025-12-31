@@ -3,7 +3,7 @@ package filterform
 import (
 	"testing"
 
-	"gh-commit-analyzer/internal/models"
+	"ghlog/internal/models"
 )
 
 func TestNew(t *testing.T) {
@@ -94,7 +94,6 @@ func TestNextField(t *testing.T) {
 		t.Errorf("focused = %d, want 1", m.focused)
 	}
 
-	// fieldCountBase is 5 (dateFrom, dateTo, author, perPage, semanticQuery)
 	m = m.nextField()
 	m = m.nextField()
 	m = m.nextField()

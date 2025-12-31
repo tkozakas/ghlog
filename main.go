@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"gh-commit-analyzer/cmd"
+	"ghlog/cmd"
 )
 
 func main() {

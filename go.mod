@@ -1,4 +1,4 @@
-module gh-commit-analyzer
+module ghlog
 
 go 1.24.6
 

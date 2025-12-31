@@ -6,13 +6,13 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"gh-commit-analyzer/internal/github"
-	"gh-commit-analyzer/internal/models"
-	"gh-commit-analyzer/internal/search"
-	"gh-commit-analyzer/internal/tui"
-	"gh-commit-analyzer/internal/tui/commitview"
-	"gh-commit-analyzer/internal/tui/filterform"
-	"gh-commit-analyzer/internal/tui/reposelect"
+	"ghlog/internal/github"
+	"ghlog/internal/models"
+	"ghlog/internal/search"
+	"ghlog/internal/tui"
+	"ghlog/internal/tui/commitview"
+	"ghlog/internal/tui/filterform"
+	"ghlog/internal/tui/reposelect"
 )
 
 type state int

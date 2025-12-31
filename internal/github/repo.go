@@ -3,7 +3,7 @@ package github
 import (
 	"time"
 
-	"gh-commit-analyzer/internal/models"
+	"ghlog/internal/models"
 )
 
 type repoResponse struct {

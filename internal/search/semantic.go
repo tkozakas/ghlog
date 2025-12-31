@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"gh-commit-analyzer/internal/models"
+	"ghlog/internal/models"
 )
 
 type ckResult struct {

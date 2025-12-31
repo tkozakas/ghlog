@@ -9,9 +9,9 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"gh-commit-analyzer/internal/models"
-	"gh-commit-analyzer/internal/search"
-	"gh-commit-analyzer/internal/tui"
+	"ghlog/internal/models"
+	"ghlog/internal/search"
+	"ghlog/internal/tui"
 )
 
 const (
