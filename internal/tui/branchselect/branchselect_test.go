@@ -3,7 +3,7 @@ package branchselect
 import (
 	"testing"
 
-	"ghlog/internal/models"
+	"github.com/tkozakas/gh-log/internal/models"
 )
 
 func TestItemTitle(t *testing.T) {

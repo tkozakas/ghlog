@@ -9,9 +9,9 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"ghlog/internal/models"
-	"ghlog/internal/search"
-	"ghlog/internal/tui"
+	"github.com/tkozakas/gh-log/internal/models"
+	"github.com/tkozakas/gh-log/internal/search"
+	"github.com/tkozakas/gh-log/internal/tui"
 )
 
 const (

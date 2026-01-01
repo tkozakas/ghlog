@@ -3,7 +3,7 @@ package search
 import (
 	"testing"
 
-	"ghlog/internal/models"
+	"github.com/tkozakas/gh-log/internal/models"
 )
 
 func TestExtractSHAFromPath(t *testing.T) {

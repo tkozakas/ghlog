@@ -3,7 +3,7 @@ package github
 import (
 	"time"
 
-	"ghlog/internal/models"
+	"github.com/tkozakas/gh-log/internal/models"
 )
 
 type repoResponse struct {

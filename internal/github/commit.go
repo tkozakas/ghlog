@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"ghlog/internal/models"
+	"github.com/tkozakas/gh-log/internal/models"
 )
 
 type commitResponse struct {

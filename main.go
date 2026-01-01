@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"ghlog/cmd"
+	"github.com/tkozakas/gh-log/cmd"
 )
 
 func main() {

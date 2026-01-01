@@ -8,8 +8,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"ghlog/internal/models"
-	"ghlog/internal/tui"
+	"github.com/tkozakas/gh-log/internal/models"
+	"github.com/tkozakas/gh-log/internal/tui"
 )
 
 type Model struct {

@@ -6,13 +6,13 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"ghlog/internal/github"
-	"ghlog/internal/models"
-	"ghlog/internal/search"
-	"ghlog/internal/tui"
-	"ghlog/internal/tui/commitview"
-	"ghlog/internal/tui/filterform"
-	"ghlog/internal/tui/reposelect"
+	"github.com/tkozakas/gh-log/internal/github"
+	"github.com/tkozakas/gh-log/internal/models"
+	"github.com/tkozakas/gh-log/internal/search"
+	"github.com/tkozakas/gh-log/internal/tui"
+	"github.com/tkozakas/gh-log/internal/tui/commitview"
+	"github.com/tkozakas/gh-log/internal/tui/filterform"
+	"github.com/tkozakas/gh-log/internal/tui/reposelect"
 )
 
 type state int

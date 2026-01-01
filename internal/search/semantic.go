@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"ghlog/internal/models"
+	"github.com/tkozakas/gh-log/internal/models"
 )
 
 type ckResult struct {

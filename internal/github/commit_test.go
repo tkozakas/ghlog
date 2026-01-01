@@ -3,7 +3,7 @@ package github
 import (
 	"testing"
 
-	"ghlog/internal/models"
+	"github.com/tkozakas/gh-log/internal/models"
 )
 
 func TestBuildCommitsEndpoint(t *testing.T) {

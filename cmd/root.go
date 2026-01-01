@@ -6,8 +6,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"ghlog/internal/app"
-	"ghlog/internal/github"
+	"github.com/tkozakas/gh-log/internal/app"
+	"github.com/tkozakas/gh-log/internal/github"
 )
 
 var rootCmd = &cobra.Command{

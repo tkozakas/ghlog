@@ -3,7 +3,7 @@ package commitview
 import (
 	"testing"
 
-	"ghlog/internal/models"
+	"github.com/tkozakas/gh-log/internal/models"
 )
 
 func TestModelCountCommits(t *testing.T) {

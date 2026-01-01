@@ -3,7 +3,7 @@ package filterform
 import (
 	"testing"
 
-	"ghlog/internal/models"
+	"github.com/tkozakas/gh-log/internal/models"
 )
 
 func TestNew(t *testing.T) {

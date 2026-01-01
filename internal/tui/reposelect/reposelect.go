@@ -8,8 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"ghlog/internal/models"
-	"ghlog/internal/tui"
+	"github.com/tkozakas/gh-log/internal/models"
+	"github.com/tkozakas/gh-log/internal/tui"
 )
 
 type item struct {

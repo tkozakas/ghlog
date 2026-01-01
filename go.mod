@@ -1,4 +1,4 @@
-module ghlog
+module github.com/tkozakas/gh-log
 
 go 1.24.6
 
